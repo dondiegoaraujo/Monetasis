@@ -1,185 +1,108 @@
+
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const session = require('express-session');
-const passport = require('passport');
 require('dotenv').config();
-
-// Importar rotas
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const transactionRoutes = require('./routes/transactions');
-const categoryRoutes = require('./routes/categories');
-const goalRoutes = require('./routes/goals');
-const budgetRoutes = require('./routes/budgets');
-const analyticsRoutes = require('./routes/analytics');
-const aiRoutes = require('./routes/ai');
-const notificationRoutes = require('./routes/notifications');
-
-// Importar middlewares
-const authMiddleware = require('./middleware/auth');
-const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const HOST = '0.0.0.0';
 
-// Middleware de segurança
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
+// Middlewares básicos
+app.use(cors());
+app.use(express.json());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // limite de 100 requests por IP
-  message: {
-    error: 'Muitas tentativas. Tente novamente em 15 minutos.'
-  }
-});
-app.use(limiter);
-
-// CORS
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://monetasis.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
-// Body parser
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session configuration
-app.use(session({
-  secret: process.env.JWT_SECRET || 'fallback-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
-}));
-
-// Passport middleware
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    version: '1.0.0'
-  });
-});
-
-// Root endpoint
+// Rota de teste - Health check
 app.get('/', (req, res) => {
   res.json({
     message: '🚀 MonetAsis API - Sistema de Gestão Financeira',
+    status: 'FUNCIONANDO!',
     version: '1.0.0',
-    endpoints: {
-      auth: '/auth',
-      users: '/users',
-      transactions: '/transactions',
-      categories: '/categories',
-      goals: '/goals',
-      budgets: '/budgets',
-      analytics: '/analytics',
-      ai: '/ai',
-      notifications: '/notifications',
-      health: '/health'
-    },
-    documentation: 'https://github.com/dondiegoaraujo/monetasis-backend'
+    timestamp: new Date().toISOString(),
+    features: [
+      '✅ Servidor Express rodando',
+      '✅ CORS configurado', 
+      '✅ JSON parser ativo',
+      '🔄 Banco de dados em configuração',
+      '🔄 Rotas da API em desenvolvimento'
+    ]
   });
 });
 
-// Rotas da API
-app.use('/auth', authRoutes);
-app.use('/users', authMiddleware, userRoutes);
-app.use('/transactions', authMiddleware, transactionRoutes);
-app.use('/categories', authMiddleware, categoryRoutes);
-app.use('/goals', authMiddleware, goalRoutes);
-app.use('/budgets', authMiddleware, budgetRoutes);
-app.use('/analytics', authMiddleware, analyticsRoutes);
-app.use('/ai', authMiddleware, aiRoutes);
-app.use('/notifications', authMiddleware, notificationRoutes);
+// Rota de health check
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
 
-// Middleware de tratamento de erros (deve ser o último)
-app.use(errorHandler);
+// Rota de teste para autenticação (simulada)
+app.post('/auth/test', (req, res) => {
+  res.json({
+    message: '🔐 Endpoint de autenticação funcionando',
+    data: {
+      user: 'teste',
+      token: 'jwt_token_exemplo'
+    }
+  });
+});
 
-// 404 handler
+// Rota de teste para transações (simulada)
+app.get('/transactions', (req, res) => {
+  res.json({
+    message: '💰 Endpoint de transações funcionando',
+    data: [
+      {
+        id: 1,
+        description: 'Salário',
+        amount: 5000,
+        type: 'income',
+        date: '2024-08-19'
+      },
+      {
+        id: 2,
+        description: 'Supermercado',
+        amount: 150,
+        type: 'expense', 
+        date: '2024-08-19'
+      }
+    ]
+  });
+});
+
+// Middleware de erro
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error: 'Algo deu errado!',
+    message: err.message
+  });
+});
+
+// 404
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Endpoint não encontrado',
-    message: `Rota ${req.originalUrl} não existe`,
     availableEndpoints: [
       'GET /',
-      'GET /health',
-      'POST /auth/register',
-      'POST /auth/login',
-      'GET /auth/google',
-      'GET /transactions',
-      'POST /transactions',
-      'GET /analytics/dashboard'
+      'GET /health', 
+      'POST /auth/test',
+      'GET /transactions'
     ]
   });
 });
 
 // Inicializar servidor
-app.listen(PORT, HOST, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`
 ╔══════════════════════════════════════╗
 ║        🚀 MonetAsis API Server        ║
 ║                                      ║
 ║  Porta: ${PORT.toString().padEnd(27)} ║
-║  Host: ${HOST.padEnd(28)} ║
-║  Ambiente: ${(process.env.NODE_ENV || 'development').padEnd(22)} ║
+║  Status: FUNCIONANDO!                ║
 ║  Timestamp: ${new Date().toLocaleString().padEnd(20)} ║
 ╚══════════════════════════════════════╝
-
-✅ Servidor rodando em http://${HOST}:${PORT}
-📚 Documentação: http://${HOST}:${PORT}
-🔍 Health Check: http://${HOST}:${PORT}/health
-
-🎯 Endpoints disponíveis:
-   • POST /auth/register - Registro de usuários
-   • POST /auth/login - Login
-   • GET /auth/google - OAuth Google
-   • GET /transactions - Listar transações
-   • POST /transactions - Criar transação
-   • GET /analytics/dashboard - Dashboard completo
-   • GET /ai/insights - Insights da IA financeira
-`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('🔄 Recebido SIGTERM. Encerrando servidor graciosamente...');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('🔄 Recebido SIGINT. Encerrando servidor graciosamente...');
-  process.exit(0);
+  `);
 });
 
 module.exports = app;
