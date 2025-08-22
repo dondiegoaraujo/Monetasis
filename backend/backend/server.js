@@ -7,7 +7,8 @@ require('dotenv').config();
 
 const authRoutes = require('./src/routes/auth');
 const transactionRoutes = require('./src/routes/transactions');
-
+const aiRoutes = require('./src/routes/ai');
+const emailRoutes = require('./src/routes/email');
 const app = express();
 
 // Security middleware
@@ -52,7 +53,8 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
-
+app.use('/api/ai', aiRoutes);
+app.use('/api/email', emailRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -68,3 +70,7 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+// Inicializar scheduler de emails
+if (process.env.NODE_ENV === 'production') {
+  require('./src/services/emailScheduler');
+}
