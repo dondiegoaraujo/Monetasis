@@ -1,0 +1,8 @@
+{
+  "name": "monetasis-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "cd front-end && npm install && npm run build",
+    "dev": "cd front-end && npm run dev"
+  }
+}
