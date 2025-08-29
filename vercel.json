@@ -1,14 +1,8 @@
 {
-  "builds": [
-    {
-      "src": "front-end/package.json",
-      "use": "@vercel/next"
+  "version": 2,
+  "functions": {
+    "front-end/pages/api/**/*.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/front-end/$1"
-    }
-  ]
+  }
 }
