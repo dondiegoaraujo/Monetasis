@@ -1,7 +1,14 @@
 {
-  "buildCommand": "cd front-end && npm run build",
-  "outputDirectory": "front-end/.next",
-  "installCommand": "cd front-end && npm install",
-  "devCommand": "cd front-end && npm run dev",
-  "framework": null
+  "builds": [
+    {
+      "src": "front-end/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/front-end/$1"
+    }
+  ]
 }
