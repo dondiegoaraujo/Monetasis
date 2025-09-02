@@ -16,7 +16,7 @@ export default function Home() {
 
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register'
-      const response = await fetch(`${endpoint}`, {
+      const response = await fetch(`https://monetasis.onrender.com${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
