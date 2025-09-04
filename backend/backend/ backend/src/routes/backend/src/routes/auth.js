@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Ajuste o caminho conforme sua estrutura
+const User = require('../../models/User');
 const router = express.Router();
 
 // Middleware para validar email
