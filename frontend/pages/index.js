@@ -17,20 +17,42 @@ export default function Home() {
     setLoading(true);
     setError(null);
 
-    // ESTA É A LINHA CORRIGIDA
-    const endpoint = isLogin ? '/auth/login' : '/auth/register';
-    
-    const payload = isLogin ? { email, password } : { name, email, password };
-
     try {
-      const response = await axios.post(`https://monetasis.onrender.com${endpoint}`, payload);
+      // --- VERIFICAÇÃO DA VARIÁVEL DE AMBIENTE ---
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      if (!apiUrl) {
+        throw new Error("Erro de configuração: A variável NEXT_PUBLIC_API_URL não foi encontrada.");
+      }
+
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
+      const payload = isLogin ? { email, password } : { name, email, password };
+      
+      const fullUrl = `${apiUrl}${endpoint}`;
+      
+      console.log(`Enviando requisição para: ${fullUrl}`); // Log para depuração
+
+      const response = await axios.post(fullUrl, payload);
+      
       const { token } = response.data;
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       router.push('/dashboard');
+
     } catch (err) {
-      setError(err.response?.data?.message || 'Algo deu errado. Tente novamente.');
-      console.error(err);
+      // --- CAPTURA DE ERRO MELHORADA ---
+      console.error("--- ERRO DETALHADO ---", err);
+      let errorMessage = 'Ocorreu um erro inesperado.';
+      if (err.message.includes('Network Error')) {
+        errorMessage = 'Erro de rede. Verifique sua conexão ou a configuração de CORS no servidor.';
+      } else if (err.response) {
+        // O servidor respondeu com um status de erro (4xx, 5xx)
+        errorMessage = `Erro do servidor: ${err.response.data.message || err.response.statusText}`;
+      } else {
+        // Erro na configuração da requisição ou outro problema
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
+
     } finally {
       setLoading(false);
     }
@@ -39,6 +61,7 @@ export default function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.formContainer}>
+        {/* O formulário permanece o mesmo */}
         <h1>{isLogin ? 'Login' : 'Cadastro'}</h1>
         <form onSubmit={handleSubmit}>
           {!isLogin && (
@@ -68,7 +91,7 @@ export default function Home() {
             {loading ? 'Carregando...' : (isLogin ? 'Entrar' : 'Cadastrar')}
           </button>
         </form>
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={styles.error}>Erro: {error}</p>}
         <button className={styles.toggleButton} onClick={() => setIsLogin(!isLogin)}>
           {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Faça login'}
         </button>
