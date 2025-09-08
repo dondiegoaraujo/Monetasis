@@ -1,76 +1,53 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+const cors = require('cors'); // Importa o pacote cors
+const dotenv = require('dotenv');
+const authRoutes = require('./routes/auth');
+const transactionRoutes = require('./routes/transactions');
 
-const authRoutes = require('./src/routes/auth');
-const transactionRoutes = require('./src/routes/transactions');
-const aiRoutes = require('./src/routes/ai');
-const emailRoutes = require('./src/routes/email');
+dotenv.config();
+
 const app = express();
 
-// Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'https://your-frontend.vercel.app',
-    process.env.FRONTEND_URL
-  ],
-  credentials: true
-}));
+// --- CONFIGURAÇÃO DO CORS ---
+// Lista de domínios que podem fazer requisições para esta API
+const allowedOrigins = [
+  'http://localhost:3000', // Para desenvolvimento local
+  'https://monetasis.vercel.app',
+  'https://www.monetasis.com.br'
+];
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100
-});
-app.use(limiter);
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permite requisições sem 'origin' (como apps mobile ou Postman) ou se a origem estiver na lista
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200 // Para navegadores mais antigos
+};
 
-// Body parser
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions)); // Usa o middleware cors com as opções definidas
+// --- FIM DA CONFIGURAÇÃO DO CORS ---
 
-// Health check route for Render
-app.get('/', (req, res) => {
-  res.json({ 
-    message: '🚀 MonetaSis API funcionando!',
-    status: 'online',
-    timestamp: new Date().toISOString()
-  });
-});
+app.use(express.json());
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI, {
+// Conexão com o MongoDB
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ MongoDB conectado com sucesso!'))
-.catch((err) => console.error('❌ Erro ao conectar MongoDB:', err));
+.then(() => console.log('MongoDB conectado com sucesso.'))
+.catch(err => console.error('Erro ao conectar com o MongoDB:', err));
 
-// Routes
-app.use('/api/auth', authRoutes);
+// Rotas
+app.get('/', (req, res) => {
+  res.json({ message: "Bem-vindo à API Monetasis" });
+});
+app.use('/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/email', emailRoutes);
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Algo deu errado!' });
-});
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Rota não encontrada' });
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
-// Inicializar scheduler de emails
-if (process.env.NODE_ENV === 'production') {
-  require('./src/services/emailScheduler');
-}
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
