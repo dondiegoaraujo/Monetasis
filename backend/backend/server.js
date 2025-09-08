@@ -9,28 +9,10 @@ dotenv.config();
 
 const app = express();
 
-// --- CONFIGURAÇÃO DO CORS ---
-// Lista de domínios que podem fazer requisições para esta API
-const allowedOrigins = [
-  'http://localhost:3000', // Para desenvolvimento local
-  'https://monetasis.vercel.app',
-  'https://www.monetasis.com.br'
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Permite requisições sem 'origin' (como apps mobile ou Postman) ou se a origem estiver na lista
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  optionsSuccessStatus: 200 // Para navegadores mais antigos
-};
-
-app.use(cors(corsOptions)); // Usa o middleware cors com as opções definidas
-// --- FIM DA CONFIGURAÇÃO DO CORS ---
+// --- CONFIGURAÇÃO DE CORS SIMPLIFICADA (PARA TESTE) ---
+// Isso permite requisições de QUALQUER origem.
+app.use(cors());
+// --- FIM DA CONFIGURAÇÃO ---
 
 app.use(express.json());
 
